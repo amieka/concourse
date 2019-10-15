@@ -3,11 +3,10 @@ package k8s_test
 import (
 	"time"
 
-	"github.com/onsi/gomega/gexec"
-
 	. "github.com/concourse/concourse/topgun"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gexec"
 )
 
 var _ = Describe("TSA Service Node Port", func() {
@@ -32,7 +31,7 @@ var _ = Describe("TSA Service Node Port", func() {
 		fly.Login("test", "test", atcEndpoint)
 		Eventually(func() []Worker {
 			return getRunningWorkers(fly.GetWorkers())
-		}, 2*time.Minute, 10*time.Second).
+		}, 5*time.Minute, 60*time.Second).
 			ShouldNot(HaveLen(0))
 	})
 

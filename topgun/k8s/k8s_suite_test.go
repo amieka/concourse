@@ -11,7 +11,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"testing"
 	"time"
 
@@ -44,6 +43,7 @@ var (
 	fly         FlyCli
 	namespace   string
 	releaseName string
+	portForwardingSucc bool = true
 )
 
 var _ = SynchronizedBeforeSuite(func() []byte {
@@ -85,10 +85,11 @@ var _ = BeforeEach(func() {
 	tmp, err := ioutil.TempDir("", "topgun-tmp")
 	Expect(err).ToNot(HaveOccurred())
 
+	rand.Seed(time.Now().UTC().UnixNano())
 	fly = FlyCli{
 		Bin:    Environment.FlyPath,
-		Target: "concourse-topgun-k8s-" + strconv.Itoa(GinkgoParallelNode()),
-		Home:   filepath.Join(tmp, "fly-home-"+strconv.Itoa(GinkgoParallelNode())),
+		Target: fmt.Sprintf("concourse-topgun-k8s-%d-%d", GinkgoParallelNode(), rand.Int63n(100000000)),
+		Home:   filepath.Join(tmp, fmt.Sprintf("fly-home-%d-%d", GinkgoParallelNode(), rand.Int63n(100000000))),
 	}
 
 	err = os.Mkdir(fly.Home, 0755)
@@ -230,6 +231,8 @@ func waitAllPodsInNamespaceToBeReady(namespace string) {
 
 		return podsReady == len(expectedPods)
 	}, 5*time.Minute, 10*time.Second).Should(BeTrue(), "expected all pods to be running")
+
+	//time.Sleep(5*time.Second)
 }
 
 func deletePods(namespace string, flags ...string) []string {
@@ -252,6 +255,8 @@ func deletePods(namespace string, flags ...string) []string {
 }
 
 func startPortForwardingWithProtocol(namespace, resource, port, protocol string) (*gexec.Session, string) {
+	//ensure the pod is ready to serv
+
 	session := Start(nil, "kubectl", "port-forward", "--namespace="+namespace, resource, ":"+port)
 	Eventually(session.Out).Should(gbytes.Say("Forwarding"))
 
@@ -259,6 +264,41 @@ func startPortForwardingWithProtocol(namespace, resource, port, protocol string)
 		FindStringSubmatch(string(session.Out.Contents()))
 
 	Expect(address).NotTo(BeEmpty())
+
+	//currentTime := time.Now()
+	//forwardAddress := protocol + "://" + address[0]
+	//
+	//TODO: for test purpose, if the port equal to 8080, we think it is concourse
+	//if port == "8080" {
+	//	for {
+	//		resp, err := http.Get(forwardAddress + "/api/v1/info")
+	//		if nil == err && resp.StatusCode == 200{
+	//
+	//			bodyBytes, err := ioutil.ReadAll(resp.Body)
+	//			if err != nil {
+	//				fmt.Println("#### FAILING TO READ BODY")
+	//			}
+	//			bodyString := string(bodyBytes)
+	//			fmt.Println("#### " +bodyString)
+	//			err = resp.Body.Close()
+	//			Expect(err).ToNot(HaveOccurred())
+	//			break
+	//		}
+	//
+	//		if nil != resp {
+	//			err = resp.Body.Close()
+	//			Expect(err).ToNot(HaveOccurred())
+	//		}
+	//
+	//		if time.Now().Sub(currentTime) > time.Minute {
+	//			Fail("failed to wait concourse to be ready after 60 secs")
+	//		}
+	//
+	//		time.Sleep(1*time.Second)
+	//	}
+	//}
+
+
 
 	return session, protocol + "://" + address[0]
 }
@@ -277,12 +317,17 @@ func getRunningWorkers(workers []Worker) (running []Worker) {
 }
 
 func cleanup(releaseName, namespace string, proxySession *gexec.Session) {
+	if CurrentGinkgoTestDescription().Failed {
+		return
+	}
+	
 	helmDestroy(releaseName)
 	Run(nil, "kubectl", "delete", "namespace", namespace, "--wait=false")
 
 	if proxySession != nil {
 		Wait(proxySession.Interrupt())
 	}
+
 }
 
 func onPks(f func()) {

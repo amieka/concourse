@@ -35,7 +35,7 @@ var _ = Describe("Kubernetes credential management", func() {
 		By("Waiting for a running worker")
 		Eventually(func() []Worker {
 			return getRunningWorkers(fly.GetWorkers())
-		}, 2*time.Minute, 10*time.Second).
+		}, 5*time.Minute, 60*time.Second).
 			ShouldNot(HaveLen(0))
 	})
 

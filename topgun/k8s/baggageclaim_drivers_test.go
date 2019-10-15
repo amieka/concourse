@@ -57,7 +57,7 @@ func baggageclaimWorks(driver string, selectorFlags ...string) {
 
 			Eventually(func() []Worker {
 				return getRunningWorkers(fly.GetWorkers())
-			}, 2*time.Minute, 10*time.Second).
+			}, 5*time.Minute, 60*time.Second).
 				ShouldNot(HaveLen(0))
 
 			By("Setting and triggering a dumb pipeline")
@@ -72,6 +72,14 @@ func baggageclaimFails(driver string, selectorFlags ...string) {
 	Context(driver, func() {
 		It("fails", func() {
 			setReleaseNameAndNamespace("bd-" + driver)
+			//helmDeployTestFlags := []string{
+			//	"--set=concourse.web.kubernetes.enabled=false",
+			//	"--set=concourse.worker.baggageclaim.driver=" + driver,
+			//	"--set=worker.replicas=1",
+			//}
+			//
+			//helmArgs := helmInstallArgs(append(helmDeployTestFlags, selectorFlags...)...)
+			//helmDeploy(releaseName, releaseName, Environment.ConcourseChartDir, helmArgs...)
 			deployWithDriverAndSelectors(driver, selectorFlags...)
 
 			Eventually(func() []byte {

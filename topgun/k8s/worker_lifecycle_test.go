@@ -41,7 +41,7 @@ var _ = Describe("Worker lifecycle", func() {
 		By("waiting for a running worker")
 		Eventually(func() []Worker {
 			return getRunningWorkers(fly.GetWorkers())
-		}, 2*time.Minute, 10*time.Second).
+		}, 5*time.Minute, 60*time.Second).
 			ShouldNot(HaveLen(0))
 
 		fly.Run("set-pipeline", "-n",
@@ -100,7 +100,7 @@ var _ = Describe("Worker lifecycle", func() {
 				By("seeing that there are no workers")
 				Eventually(func() []Worker {
 					return getRunningWorkers(fly.GetWorkers())
-				}, 1*time.Minute, 1*time.Second).
+				}, 5*time.Minute, 60*time.Second).
 					Should(HaveLen(0))
 
 				By("seeing that the build succeeded")
@@ -118,7 +118,7 @@ var _ = Describe("Worker lifecycle", func() {
 
 				Eventually(func() []Worker {
 					return getRunningWorkers(fly.GetWorkers())
-				}, 1*time.Minute, 1*time.Second).
+				}, 5*time.Minute, 60*time.Second).
 					Should(HaveLen(0))
 
 				By("seeing that the worker disappeared")

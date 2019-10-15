@@ -59,7 +59,7 @@ var _ = Describe("external workers through separate deployments", func() {
 		By("waiting for a running worker")
 		Eventually(func() []Worker {
 			return getRunningWorkers(fly.GetWorkers())
-		}, 2*time.Minute, 10*time.Second).
+		}, 5*time.Minute, 60*time.Second).
 			Should(HaveLen(1))
 	}
 
@@ -67,7 +67,7 @@ var _ = Describe("external workers through separate deployments", func() {
 		By("worker never registers")
 		Consistently(func() []Worker {
 			return getRunningWorkers(fly.GetWorkers())
-		}, 1*time.Minute, 10*time.Second).
+		}, 5*time.Minute, 60*time.Second).
 			Should(HaveLen(0))
 	}
 

@@ -44,6 +44,6 @@ func successfullyDeploysConcourse(webReplicas, workerReplicas int) {
 	By("waiting for a running worker")
 	Eventually(func() []Worker {
 		return getRunningWorkers(fly.GetWorkers())
-	}, 2*time.Minute, 10*time.Second).
+	}, 5*time.Minute, 60*time.Second).
 		Should(HaveLen(workerReplicas))
 }
