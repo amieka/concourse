@@ -71,6 +71,14 @@ func (f *FlyCli) Start(argv ...string) *gexec.Session {
 	return Start([]string{"HOME=" + f.Home}, f.Bin, append([]string{"-t", f.Target}, argv...)...)
 }
 
+func (f *FlyCli) RunWithRetry(argv ...string) {
+	Eventually(func() int {
+		sess := f.Start(argv...)
+		<-sess.Exited
+		return sess.ExitCode()
+	}, 5*time.Minute).Should(BeZero())
+}
+
 func (f *FlyCli) StartWithEnv(env []string, argv ...string) *gexec.Session {
 	return Start(append([]string{"HOME=" + f.Home}, env...), f.Bin, append([]string{"-t", f.Target}, argv...)...)
 }

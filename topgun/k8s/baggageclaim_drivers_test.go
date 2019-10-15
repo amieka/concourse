@@ -61,9 +61,9 @@ func baggageclaimWorks(driver string, selectorFlags ...string) {
 				ShouldNot(HaveLen(0))
 
 			By("Setting and triggering a dumb pipeline")
-			fly.Run("set-pipeline", "-n", "-c", "pipelines/get-task.yml", "-p", "some-pipeline")
-			fly.Run("unpause-pipeline", "-p", "some-pipeline")
-			fly.Run("trigger-job", "-w", "-j", "some-pipeline/simple-job")
+			fly.RunWithRetry("set-pipeline", "-n", "-c", "pipelines/get-task.yml", "-p", "some-pipeline")
+			fly.RunWithRetry("unpause-pipeline", "-p", "some-pipeline")
+			fly.RunWithRetry("trigger-job", "-w", "-j", "some-pipeline/simple-job")
 		})
 	})
 }
@@ -72,14 +72,14 @@ func baggageclaimFails(driver string, selectorFlags ...string) {
 	Context(driver, func() {
 		It("fails", func() {
 			setReleaseNameAndNamespace("bd-" + driver)
-			//helmDeployTestFlags := []string{
-			//	"--set=concourse.web.kubernetes.enabled=false",
-			//	"--set=concourse.worker.baggageclaim.driver=" + driver,
-			//	"--set=worker.replicas=1",
-			//}
-			//
-			//helmArgs := helmInstallArgs(append(helmDeployTestFlags, selectorFlags...)...)
-			//helmDeploy(releaseName, releaseName, Environment.ConcourseChartDir, helmArgs...)
+			helmDeployTestFlags := []string{
+				"--set=concourse.web.kubernetes.enabled=false",
+				"--set=concourse.worker.baggageclaim.driver=" + driver,
+				"--set=worker.replicas=1",
+			}
+
+			helmArgs := helmInstallArgs(append(helmDeployTestFlags, selectorFlags...)...)
+			helmDeploy(releaseName, releaseName, Environment.ConcourseChartDir, helmArgs...)
 			deployWithDriverAndSelectors(driver, selectorFlags...)
 
 			Eventually(func() []byte {
